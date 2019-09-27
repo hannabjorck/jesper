@@ -1,12 +1,18 @@
-#ställ dig i rätt mapp
-setwd("/Users/hanbjo/Desktop/2019-08-21-OLINK")
+#ställ dig i rätt mapp (användarspecifik, så en annan mapp på jespers system)
+setwd("/Users/hanbjo/Desktop/2019-08-21-OLINK/repo/jesper")
 
-#laddar in fenotypdata
-load("data/2019-06-16-phex.rdata")
+
+#where is data stored (relatie path)
+datastorage <- "../../data/"
+scriptsFunctions <- "functions-all"
+#where should output be
+
+#laddar in fenotypdata 
+load(paste(datastorage, "/2019-06-16-phex.rdata", sep=""))
 
 #laddar in proteindata
 library("readxl")
-prot2 <- read_excel("data/ASAP_Olink_clinical_May_2018.xlsx")
+prot2 <- read_excel(paste(datastorage, "ASAP_Olink_clinical_May_2018.xlsx", sep=""))
 prot2 <- as.data.frame(prot2)
 prot2 <- prot2[ ,c(1, 94:551)]
 
@@ -75,7 +81,7 @@ tf_BAV_nonDIL <- tf_BAV & tf_nonDIL
 tf_TAV_DIL <- tf_TAV & tf_dil
 tf_TAV_nonDIL <- tf_TAV & tf_nonDIL
 
-pdf("out/volcano.all.groups.pdf")
+pdf("../../out/volcano.all.groups.pdf")
 
 #utan covs
 df_p_fc <- regression_for_volcano_two_groups(df=df, tf1=tf_BAV_DIL, tf2=tf_BAV_nonDIL , totest="aodia")
