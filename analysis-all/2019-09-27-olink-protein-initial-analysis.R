@@ -166,3 +166,13 @@ abline(h=-log10(fdrcutoff), col="red")
 
 dev.off()
 
+pdf("../../out/FC vs. spearman_P.pdf")
+
+plot(df_p_fc[, "resfc"], -log10(res_S), main="spearman", xlab="fold-change" , ylab="-log10 pvalue")
+bonf <- 0.05/length(res_S)
+abline(h=-log10(bonf))
+
+fdrcutoff <- fdrcutoffFromPvalues(res_S)
+abline(h=-log10(fdrcutoff), col="red")
+
+dev.off()
