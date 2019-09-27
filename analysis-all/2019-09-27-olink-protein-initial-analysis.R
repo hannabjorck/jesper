@@ -18,7 +18,7 @@ prot2 <- prot2[ ,c(1, 94:551)]
 
 
 #läs in funktionerna i funktionsfilen
-source("scripts/2019-09-05-funktionsfil.R")
+source("functions-all/2019-09-05-funktionsfil.R")
 
 #addera A på ID för att kunna matcha på fenotypdata 
 nyaIDnamn <- paste("A", prot2[ ,"ID"], sep="")
@@ -145,5 +145,24 @@ resR_S[i] <- spearman$estimate
 }
 
 
+pdf("../../out/pearson and spearman.pdf")
+
 plot(resR_P, resR_S, col="purple")
+plot(res_P, res_S, col="blue")
+plot(res_P, resR_P, col="red")
+plot(res_S, resR_S, col="black")
+
+dev.off()
+
+
+pdf("../../out/FC vs. pearson_P.pdf")
+
+plot(df_p_fc[, "resfc"], -log10(res_P), main="pearson", xlab="fold-change" , ylab="-log10 pvalue")
+bonf <- 0.05/length(res_P)
+abline(h=-log10(bonf))
+
+fdrcutoff <- fdrcutoffFromPvalues(res_P)
+abline(h=-log10(fdrcutoff), col="red")
+
+dev.off()
 
