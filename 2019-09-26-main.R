@@ -139,5 +139,5 @@ resR_S[i] <- spearman$estimate
 }
 
 
-plot(resR_P, resR_S)
+plot(resR_P, resR_S, col="purple")
 
