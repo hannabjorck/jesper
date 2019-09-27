@@ -164,6 +164,13 @@ abline(h=-log10(bonf))
 fdrcutoff <- fdrcutoffFromPvalues(res_P)
 abline(h=-log10(fdrcutoff), col="red")
 
+df_p_fc2 <- df_p_fc
+df_p_fc2[,"res"] <- res_P
+#colnames(df_p_fc2) <- c("res","res_fc")
+survivePearson <- whichProteinsAreAboveCutoff(df_p_fc2, fdrcutoffFromPvalues(df_p_fc2[, "res"]))
+
+text(x=survivePearson[,"resfc"], y=-log10(survivePearson[,"res"]), labels=rownames(survivePearson))
+
 dev.off()
 
 pdf("../../out/FC vs. spearman_P.pdf")
@@ -174,5 +181,6 @@ abline(h=-log10(bonf))
 
 fdrcutoff <- fdrcutoffFromPvalues(res_S)
 abline(h=-log10(fdrcutoff), col="red")
+
 
 dev.off()
