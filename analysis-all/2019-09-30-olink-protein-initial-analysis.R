@@ -135,7 +135,11 @@ for (i in 1:ncol(prot)){
   #pick out protein expression for i
   protexp <- as.numeric(prot[,i])
   
-pearson <- cor.test(protexp[tf_dil], df$aodia[tf_dil], method = c("pearson"))
+pearson <- cor.test(protexp, df$aodia, method = c("pearson"))
+#pearson <- cor.test(protexp[tf_dil], df$aodia[tf_dil], method = c("pearson"))
+#pearson <- cor.test(protexp[tf_nonDIL], df$aodia[tf_nonDIL], method = c("pearson"))
+#pearson <- cor.test(protexp[tf_TAV], df$aodia[tf_TAV], method = c("pearson"))
+#pearson <- cor.test(protexp[tf_BAV], df$aodia[tf_BAV], method = c("pearson"))
 res_P[i] <- pearson$p.value
 resR_P[i] <- pearson$estimate
 
