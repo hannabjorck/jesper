@@ -252,7 +252,7 @@ regression <- function(df, covs=NULL){
 
 
 #FOLD CHANGE BAV_TAV
-fc_bav_tav <- function(df){
+fold_change <- function(df, tf1, tf2){
     #specify which cusps to use in the analysis (only cusp==2 and cusp==3)
     cusp <- as.integer(df$Perioperative_Data__Number_of_cusps)
     tf<- cusp==3
@@ -279,15 +279,15 @@ fc_bav_tav <- function(df){
       df2$exp <- exp
       
       #store fc:s in vector
-      resfc[i] <- mean(exp[tf],na.rm=TRUE) - mean(exp[tf2],na.rm = TRUE)
+      resfc[i] <- mean(exp[tf1],na.rm=TRUE) - mean(exp[tf2],na.rm = TRUE)
       
     }
     
     #add fc to a data frame, which we can return as one object
-    df_bt_fc <- data.frame(resfc)
+    df_fold_change <- data.frame(resfc)
     #rownames(df_p_fc) <- colnames(prot)
     
     #return object
-    df_bt_fc
+    df_fold_change
     
   }
