@@ -56,7 +56,7 @@ df_p_fc <- regression_cusp(df=df)
 volcanoplot(df_p_fc)
 
 #analys bav mot tav, inkl covariates
-df_p_fc <- regression_cusp(df=df, covs=c("Age","BMI", "Sex", "aodia"))
+#df_p_fc <- regression_cusp(df=df, covs=c("Age","BMI", "Sex", "aodia"))
 volcanoplot(df_p_fc, main="BAV vs. TAV")
 
 hopp <- whichProteinsAreAboveCutoff(df_p_fc, fdrcutoffFromPvalues(df_p_fc[, "res"]))
@@ -175,6 +175,7 @@ abline(h=-log10(fdrcutoff), col="red")
 
 df_p_fc2 <- df_p_fc
 df_p_fc2[,"res"] <- res_P
+
 #colnames(df_p_fc2) <- c("res","res_fc")
 survivePearson <- whichProteinsAreAboveCutoff(df_p_fc2, fdrcutoffFromPvalues(df_p_fc2[, "res"]))
 
@@ -193,3 +194,9 @@ dev.off()
 
 
 
+
+#REGTEST
+#regression exp mot aodia, inga covariates
+df_p_fc <- regression(df=df)
+volcanoplot(df_p_fc)
+hopp <- whichProteinsAreAboveCutoff(df_p_fc, fdrcutoffFromPvalues(df_p_fc[, "res"]))
