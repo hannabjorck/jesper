@@ -56,7 +56,7 @@ df_p_fc <- regression_cusp(df=df)
 volcanoplot(df_p_fc)
 
 #analys bav mot tav, inkl covariates
-#df_p_fc <- regression_cusp(df=df, covs=c("Age","BMI", "Sex", "aodia"))
+df_p_fc <- regression_cusp(df=df, covs=c("Age","BMI", "Sex", "aodia"))
 volcanoplot(df_p_fc, main="BAV vs. TAV")
 
 hopp <- whichProteinsAreAboveCutoff(df_p_fc, fdrcutoffFromPvalues(df_p_fc[, "res"]))
@@ -196,7 +196,21 @@ dev.off()
 
 
 #REGTEST
-#regression exp mot aodia, inga covariates
-df_p_fc <- regression(df=df)
+#regression exp mot aodia (alla individer), inga covariates
+df_regression_p <- regression(df=df)
+
+#FOLD CHANGE BAV_TAV
+df_bt_fc <- fc_bav_tav(df=df)
+  
+#add pvalues P and fold change to the same data frame, which we can return as one object
+df_p_fc <- data.frame(df_regression_p, df_bt_fc)
+rownames(df_p_fc) <- colnames(prot)
+  
+volcanoplot(df_p_fc)
+
+hopp <- whichProteinsAreAboveCutoff(df_p_fc, fdrcutoffFromPvalues(df_p_fc[, "res"]))
+
+#regression exp mot aodia, med covariates
+df_p_fc <- regression(df=df, covs=c("Sex"))
 volcanoplot(df_p_fc)
 hopp <- whichProteinsAreAboveCutoff(df_p_fc, fdrcutoffFromPvalues(df_p_fc[, "res"]))
