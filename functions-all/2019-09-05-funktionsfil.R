@@ -201,7 +201,7 @@ regression <- function(df, covs=NULL){
   #add the cusp variable, which has been transformed to integers
   df$cusp <- cusp
   
-  #subset df to only includef the cusps we are interested in
+  #subset df to only include the cusps we are interested in
   df2 <- df[tf|tf2, ]
   
   #subset and grab only the columns with protein measures (OLINK)
@@ -217,7 +217,6 @@ regression <- function(df, covs=NULL){
   
   #create result vectors, to collect the results from the for-loop
   res <- rep(NA, ncol(prot))
-  resfc <- rep(NA, ncol(prot))
   
   for (i in 1:ncol(prot)){
     
@@ -227,7 +226,7 @@ regression <- function(df, covs=NULL){
     #add or replace exp in the df2 dataframe (in order to use the i:th protein)
     df2$exp <- exp
     
-    #run model generation basedn on 
+    #run model generation based on 
     model1 <- lm(formula=form, data=df2)
     
     #use the summary function to get a richer output
@@ -238,16 +237,58 @@ regression <- function(df, covs=NULL){
     pmat <- mat['aodia','Pr(>|t|)']
     #store pvalues in vector
     res[i]  <-pmat
-    #store fc:s in vector
-    resfc[i] <- mean(exp[df2$cusp==3],na.rm=TRUE) - mean(exp[df2$cusp==2],na.rm = TRUE)
+   
   }
-  
-  #add pvalues and fold change to the same data frame, which we can return as one object
-  df_p_fc <- data.frame(res, resfc)
-  rownames(df_p_fc) <- colnames(prot)
+ 
+  #add pvalues to a data frame, which we can return as one object
+  df_regression_p <- data.frame(res)
+  #rownames(df_p_fc) <- colnames(prot)
   
   #return object
-  df_p_fc
+  df_regression_p
   
 }
 
+
+
+#FOLD CHANGE BAV_TAV
+
+fc_bav_tav <- function(df, covs=NULL){
+    #specify which cusps to use in the analysis (only cusp==2 and cusp==3)
+    cusp <- as.integer(df$Perioperative_Data__Number_of_cusps)
+    tf<- cusp==3
+    tf2<- cusp==2
+    
+    #add the cusp variable, which has been transformed to integers
+    df$cusp <- cusp
+    
+    #subset df to only include the cusps we are interested in
+    df2 <- df[tf|tf2, ]
+    
+    #subset and grab only the columns with protein measures (OLINK)
+    prot <- df2[ ,grep("OLINK", colnames(df2))]
+    
+    #create result vectors, to collect the results from the for-loop
+    resfc <- rep(NA, ncol(prot))
+    
+    for (i in 1:ncol(prot)){
+      
+      #pick out protein expression for i
+      exp <- as.numeric(prot[,i])
+      
+      #add or replace exp in the df2 dataframe (in order to use the i:th protein)
+      df2$exp <- exp
+      
+      #store fc:s in vector
+      resfc[i] <- mean(exp[tf],na.rm=TRUE) - mean(exp[tf2],na.rm = TRUE)
+      
+    }
+    
+    #add fc to a data frame, which we can return as one object
+    df_bt_fc <- data.frame(resfc)
+    #rownames(df_p_fc) <- colnames(prot)
+    
+    #return object
+    df_bt_fc
+    
+  }
