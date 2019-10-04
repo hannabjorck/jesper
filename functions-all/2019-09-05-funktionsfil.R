@@ -252,8 +252,7 @@ regression <- function(df, covs=NULL){
 
 
 #FOLD CHANGE BAV_TAV
-
-fc_bav_tav <- function(df, covs=NULL){
+fc_bav_tav <- function(df){
     #specify which cusps to use in the analysis (only cusp==2 and cusp==3)
     cusp <- as.integer(df$Perioperative_Data__Number_of_cusps)
     tf<- cusp==3
