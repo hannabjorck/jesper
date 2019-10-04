@@ -95,6 +95,8 @@ df_p_fc
     
 }
 
+
+
 #volcano plot-funktion
  
 volcanoplot <- function(df_p_fc, main=""){
@@ -108,8 +110,6 @@ fdrcutoff <- fdrcutoffFromPvalues(df_p_fc[, "res"])
 abline(h=-log10(fdrcutoff), col="red")
 
 }
-
-
 
 
 
@@ -187,3 +187,67 @@ regression_for_volcano_two_groups <- function(df, tf1, tf2, totest, covs=NULL){
   df_p_fc
   
 }
+
+
+
+#REGRESSION
+regression <- function(df, covs=NULL){
+  
+  #specify which cusps to use in the analysis (only cusp==2 and cusp==3)
+  cusp <- as.integer(df$Perioperative_Data__Number_of_cusps)
+  tf<- cusp==3
+  tf2<- cusp==2
+  
+  #add the cusp variable, which has been transformed to integers
+  df$cusp <- cusp
+  
+  #subset df to only includef the cusps we are interested in
+  df2 <- df[tf|tf2, ]
+  
+  #subset and grab only the columns with protein measures (OLINK)
+  prot <- df2[ ,grep("OLINK", colnames(df2))]
+  
+  
+  #create the correct formula for the linear regression lm function, based on covs input variable
+  if(is.null(covs)){ 
+    form <- formula("exp~aodia")
+  }else{
+    form <- formula(paste("exp~aodia", paste(covs, collapse = "+"), sep="+"))
+  }
+  
+  #create result vectors, to collect the results from the for-loop
+  res <- rep(NA, ncol(prot))
+  resfc <- rep(NA, ncol(prot))
+  
+  for (i in 1:ncol(prot)){
+    
+    #pick out protein expression for i
+    exp <- as.numeric(prot[,i])
+    
+    #add or replace exp in the df2 dataframe (in order to use the i:th protein)
+    df2$exp <- exp
+    
+    #run model generation basedn on 
+    model1 <- lm(formula=form, data=df2)
+    
+    #use the summary function to get a richer output
+    summary2 <- summary(model1)
+    #pick out the matrix of coefficients from the regression
+    mat <- (summary2)$coefficients 
+    #only pick out the p-value element
+    pmat <- mat['aodia','Pr(>|t|)']
+    #store pvalues in vector
+    res[i]  <-pmat
+    #store fc:s in vector
+    resfc[i] <- mean(exp[df2$cusp==3],na.rm=TRUE) - mean(exp[df2$cusp==2],na.rm = TRUE)
+  }
+  
+  #add pvalues and fold change to the same data frame, which we can return as one object
+  df_p_fc <- data.frame(res, resfc)
+  rownames(df_p_fc) <- colnames(prot)
+  
+  #return object
+  df_p_fc
+  
+}
+
