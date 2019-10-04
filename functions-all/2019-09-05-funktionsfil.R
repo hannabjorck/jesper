@@ -190,22 +190,22 @@ regression_for_volcano_two_groups <- function(df, tf1, tf2, totest, covs=NULL){
 
 
 
-#REGRESSION
-regression <- function(df, covs=NULL){
+#REGRESSION aodia
+regression_aodia <- function(df, covs=NULL){
   
   #specify which cusps to use in the analysis (only cusp==2 and cusp==3)
-  cusp <- as.integer(df$Perioperative_Data__Number_of_cusps)
-  tf<- cusp==3
-  tf2<- cusp==2
-  
-  #add the cusp variable, which has been transformed to integers
-  df$cusp <- cusp
-  
-  #subset df to only include the cusps we are interested in
-  df2 <- df[tf|tf2, ]
+  #cusp <- as.integer(df$Perioperative_Data__Number_of_cusps)
+  #tf<- cusp==3
+  #tf2<- cusp==2
+  #
+  ##add the cusp variable, which has been transformed to integers
+  #df$cusp <- cusp
+  #
+  ##subset df to only include the cusps we are interested in
+  #df2 <- df[tf|tf2, ]
   
   #subset and grab only the columns with protein measures (OLINK)
-  prot <- df2[ ,grep("OLINK", colnames(df2))]
+  prot <- df[ ,grep("OLINK", colnames(df))]
   
   
   #create the correct formula for the linear regression lm function, based on covs input variable
@@ -224,10 +224,10 @@ regression <- function(df, covs=NULL){
     exp <- as.numeric(prot[,i])
     
     #add or replace exp in the df2 dataframe (in order to use the i:th protein)
-    df2$exp <- exp
+    df$exp <- exp
     
     #run model generation based on 
-    model1 <- lm(formula=form, data=df2)
+    model1 <- lm(formula=form, data=df)
     
     #use the summary function to get a richer output
     summary2 <- summary(model1)
@@ -252,17 +252,17 @@ regression <- function(df, covs=NULL){
 
 
 #FOLD CHANGE BAV_TAV
-fold_change <- function(df, tf1, tf2){
+fold_change_cusp <- function(df){
     #specify which cusps to use in the analysis (only cusp==2 and cusp==3)
     cusp <- as.integer(df$Perioperative_Data__Number_of_cusps)
-    tf<- cusp==3
+    tf1<- cusp==3
     tf2<- cusp==2
     
     #add the cusp variable, which has been transformed to integers
     df$cusp <- cusp
     
     #subset df to only include the cusps we are interested in
-    df2 <- df[tf|tf2, ]
+    df2 <- df[tf1|tf2, ]
     
     #subset and grab only the columns with protein measures (OLINK)
     prot <- df2[ ,grep("OLINK", colnames(df2))]
@@ -276,7 +276,7 @@ fold_change <- function(df, tf1, tf2){
       exp <- as.numeric(prot[,i])
       
       #add or replace exp in the df2 dataframe (in order to use the i:th protein)
-      df2$exp <- exp
+      #df2$exp <- exp
       
       #store fc:s in vector
       resfc[i] <- mean(exp[tf1],na.rm=TRUE) - mean(exp[tf2],na.rm = TRUE)

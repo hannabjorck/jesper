@@ -184,3 +184,11 @@ abline(h=-log10(fdrcutoff), col="red")
 
 
 dev.off()
+
+
+#testkära hannas nya funktioner (jesper lägger till detta 2019-10-04)
+res_df <- regression_aodia(df)
+res_df2 <- fold_change_cusp(df)
+
+
+
