@@ -291,3 +291,51 @@ fold_change_cusp <- function(df){
     df_fold_change
     
   }
+
+
+Volvano_plot_pro <- function(p,fc,symbols,symbolvec, basecutoff=1){
+  library(ggplot2)
+  library("ggrepel")
+  library("plyr")
+  
+  #now pre-set but can be included as arguments
+  title <- paste("Volcano plot", "\n", sep=" ")
+  col <- "red"
+  bonf <- 0.05/length(p)
+
+  df=data.frame(pvalue=p, fc=fc, symbol=symbols)
+
+  My_Theme = theme(
+    axis.title.x = element_text(size = 16),
+    #axis.text.x = element_text(size = 14),
+    axis.title.y = element_text(size = 16)
+  )
+
+    fdrcutoff <- fdrcutoffFromPvalues(df[,"pvalue"])
+    df <- df[df[,"pvalue"]<basecutoff, ] 
+  
+    #test dependentend color
+    df$Pcolor <- col
+    df$Pcolor[df$pvalue>bonf] <- "grey"
+    df$Pcolor[as.character(df$symbol) %in% symbolvec] <- "black"
+    df$Psize <-2
+    df$Psize[as.character(df$symbol) %in% symbolvec] <- 2
+    df$symbol2 <-as.character(df$symbol)
+    df$symbol2[!(as.character(df$symbol) %in% symbolvec)] <-""
+    pl <- ggplot(df, aes(fc, -log10(pvalue), label = symbol2)) + 
+  	 geom_point(color = df$Pcolor, size = df$Psize) + 
+         geom_point(color = "black", size = 3, data = subset(df, df$symbol %in% symbolvec)) +
+  	 geom_hline(yintercept = -log10(bonf), col="darkgrey") +
+  	 geom_hline(yintercept = -log10(0.05), linetype="dashed", col="darkgrey") +
+  	 #geom_hline(yintercept = -log10(fdrcutoff), color = "red") +
+  	 theme_classic() + My_Theme +
+         geom_label_repel(data = subset(df, !df$symbol2==""), label.size=0.25) + 
+  	 #coord_cartesian(xlim = xlim, ylim=ylim) +
+  	 labs(title = title) +
+         labs(x="log2(fold-change)") +
+         labs(y="-log10(pvalue)")
+  
+    print(pl,newpage=TRUE)
+
+}
+
