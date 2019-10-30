@@ -8,7 +8,7 @@ scriptsFunctions <- "functions-all"
 #where should output be
 
 #laddar in fenotypdata 
-load(paste(datastorage, "/2019-06-16-phex.rdata", sep=""))
+load(paste(datastorage, "/2019-10-14-phex.rdata", sep=""))
 
 #laddar in proteindata
 library("readxl")
@@ -96,19 +96,22 @@ volcanoplot(df_p_fc, main="BND vs TND unadj")
 df_p_fc <- regression_for_volcano_two_groups(df=df, tf1=tf_BAV_DIL, tf2=tf_TAV_DIL , totest="cusp")
 volcanoplot(df_p_fc, main="BD vs TD unadj")
 
-pdf("out/volcano.all.groups.adjusted_Age.pdf")
+dev.off()
+
+
+pdf("../../out/volcano.all.groups.adjusted_AGE_and_AS.pdf")
 
 #med covs
-df_p_fc <- regression_for_volcano_two_groups(df=df, tf1=tf_BAV_DIL, tf2=tf_BAV_nonDIL , totest="aodia", covs=c("Age"))
+df_p_fc <- regression_for_volcano_two_groups(df=df, tf1=tf_BAV_DIL, tf2=tf_BAV_nonDIL , totest="aodia", covs=c("AS", "Age"))
 volcanoplot(df_p_fc, main="BD vs BND adj")
 
-df_p_fc <- regression_for_volcano_two_groups(df=df, tf1=tf_TAV_DIL, tf2=tf_TAV_nonDIL , totest="aodia", covs=c("Age"))
+df_p_fc <- regression_for_volcano_two_groups(df=df, tf1=tf_TAV_DIL, tf2=tf_TAV_nonDIL , totest="aodia", covs=c("AS", "Age"))
 volcanoplot(df_p_fc, main="TD vs TND adj")
 
-df_p_fc <- regression_for_volcano_two_groups(df=df, tf1=tf_BAV_nonDIL, tf2=tf_TAV_nonDIL , totest="cusp", covs=c("Age", "AS"))
+df_p_fc <- regression_for_volcano_two_groups(df=df, tf1=tf_BAV_nonDIL, tf2=tf_TAV_nonDIL , totest="cusp", covs=c("AS", "Age"))
 volcanoplot(df_p_fc, main="BND vs TND adj")
 
-df_p_fc <- regression_for_volcano_two_groups(df=df, tf1=tf_BAV_DIL, tf2=tf_TAV_DIL , totest="cusp", covs=c("Age"))
+df_p_fc <- regression_for_volcano_two_groups(df=df, tf1=tf_BAV_DIL, tf2=tf_TAV_DIL , totest="cusp", covs=c("AS", "Age"))
 volcanoplot(df_p_fc, main="BD vs TD adj")
 
 dev.off()
@@ -134,12 +137,13 @@ for (i in 1:ncol(prot)){
   
   #pick out protein expression for i
   protexp <- as.numeric(prot[,i])
+
   
-pearson <- cor.test(protexp, df$aodia, method = c("pearson"))
+#pearson <- cor.test(protexp, df$aodia, method = c("pearson"))
 #pearson <- cor.test(protexp[tf_dil], df$aodia[tf_dil], method = c("pearson"))
 #pearson <- cor.test(protexp[tf_nonDIL], df$aodia[tf_nonDIL], method = c("pearson"))
 #pearson <- cor.test(protexp[tf_TAV], df$aodia[tf_TAV], method = c("pearson"))
-#pearson <- cor.test(protexp[tf_BAV], df$aodia[tf_BAV], method = c("pearson"))
+pearson <- cor.test(protexp[tf_BAV], df$aodia[tf_BAV], method = c("pearson"))
 res_P[i] <- pearson$p.value
 resR_P[i] <- pearson$estimate
 
@@ -150,6 +154,9 @@ resR_P[i] <- pearson$estimate
 
 }
 
+res_P <- data.frame(protein = colnames(prot), pearson.p = res_P, pesrson.r = resR_P)
+res_P <- arrange(res_P, pearson.p)
+write.table(res_P, "../../out/Corr_aodia_protexp_BAV.txt", sep = "\t", row.names = F)
 
 
 pdf("../../out/pearson and spearman.pdf")
@@ -162,9 +169,8 @@ plot(res_S, resR_S, col="black")
 dev.off()
 
 
-
-
 pdf("../../out/FC vs. pearson_P.pdf")
+
 
 plot(df_p_fc[, "resfc"], -log10(res_P), main="pearson", xlab="fold-change" , ylab="-log10 pvalue")
 bonf <- 0.05/length(res_P)
@@ -196,13 +202,13 @@ dev.off()
 
 #REGTEST
 #regression exp mot aodia (alla individer), inga covariates
-df_regression_p <- regression(df=df)
+df_regression_p <- regression_aodia(df=df)
 
 #regression exp mot aodia (ONLY TAV), inga covariates
-df_regression_p <- regression(df=df[tf_TAV, ])
+df_regression_p <- regression_aodia(df=df[tf_TAV, ])
   
 #regression exp mot aodia (ONLY BAV), inga covariates
-df_regression_p <- regression(df=df[tf_BAV, ])
+df_regression_p <- regression_aodia(df=df[tf_BAV, ])
 
 
 #FOLD CHANGE
@@ -218,5 +224,5 @@ volcanoplot(df_p_fc)
 hopp <- whichProteinsAreAboveCutoff(df_p_fc, fdrcutoffFromPvalues(df_p_fc[, "res"]))
 
 #regression exp mot aodia, med covariates
-df_p_fc <- regression(df=df, covs=c("Sex"))
+df_p_fc <- regression_aodia(df=df, covs=c("Sex"))
 volcanoplot(df_p_fc)
