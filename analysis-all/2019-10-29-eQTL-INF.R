@@ -75,14 +75,14 @@ se <-SummarizedExperiment(assays=list(counts=as.matrix(heartexp_clean)), rowRang
 #Ta ut en random SNP och förvandlavärdena till 1,2,3
 ranSNP <- geno(vcf)[["GT"]][1,]
 
-#nu är det så att du måste matcha individ i vcf med individ i se, du kan smidigast göra det såhär:
+#nu är det så att du måste matcha individ i vcf med individ i se, du kan smidigast göra det såhär: GÖR FUNKTION AV DETTA ""match_vcf_object_to_another_vcf_object"
 #först GT
 id_vcf <- colnames(vcf)
 
 #fixa till dubbelnamnen i vcf ID
 id_vcf2 <- sub(".*_","", id_vcf)
 
-#finns alla x i y, och vv
+#finns alla x i y, och vice versa
 id_se <- colnames(se)
 tf <- id_vcf2 %in% id_se
 tf2 <- id_se %in% id_vcf2
@@ -95,5 +95,88 @@ colnames(vcf2) <- sub(".*_","",colnames(vcf2))
 m <- match(colnames(se2), colnames(vcf2))
 
 
+tf <- colnames(vcf2)[m]==colnames(se2)
+if(!all(tf)) stop("something is wrong") 
+vcf2m <- vcf2[,m]
 
-  
+#vi har genexpression, vi har genotyp, alla individer är matchade, DÄRFÖR eQTL
+#Ta ut en SNP från den matchade datan
+snp1 <- geno(vcf2m)[["GT"]][1,]
+
+#skapa en tom vektor där du stoppar in alla värden, snp1X
+snp1X <- rep(NA, length(snp1))
+
+#lägg ihop heterozygoterna i samma grupp, .
+snp1X[snp1=="0|0"] <- 1
+snp1X[snp1=="1|0" | snp1=="0|1" ] <- 2
+snp1X[snp1=="1|1"] <- 3
+
+#lm gilla rinte characters, gör därför värdena till numeric innan du gör lm
+snp1X <- as.numeric(snp1X)
+
+#Ta ut en gen från den matchade datan
+gene1 <- assays(se2)[["counts"]][1,]
+
+#plotta. SNP måste göras om till factor, för att ta bort snuffarna
+plot(factor(snp1X), gene1)
+
+#analysera
+res1 <- lm(gene1~snp1X)
+
+#För att kolla alla gener kring en snp. HANNA, KOMMENTERA HÄR!!
+#giantSNP <- granges(vcf2m[1,])+200000
+hits <- findOverlaps(granges(vcf2m[1,])+200000, se2)
+
+# --> Hits object with 2 hits and 0 metadata columns, betyder att i se2 så matchade element 14255 och 14256 (i detta fall två gener som "träffar" giantSNP)
+#plocka ut dessa två hits och spara dem i ett nytt objekt (se3)
+se3 <- se2[subjectHits(hits)]
+
+
+#for loop
+#TOM VEKTOR
+lst <- list()
+
+  #Ta ut alla GT från den matchade datan
+  for (i in 1:nrow(vcf2m)){
+
+    snp_each <- geno(vcf2m)[["GT"]][i, ]
+    res <- rep(NA, length(snp_each))
+    
+    #lägg ihop heterozygoterna i samma grupp
+    res[snp_each=="0|0"] <- 1
+    res[snp_each=="1|0" | snp1=="0|1" ] <- 2
+    res[snp_each=="1|1"] <- 3
+    
+    #lm gilla rinte characters, gör därför värdena till numeric 
+    # res <- as.integer(snp_each)
+    
+    #För att kolla alla gener kring en snp. 
+    hits <- findOverlaps(granges(vcf2m[i,])+200000, se2)
+    
+    # plocka ut hits och spara dem i ett nytt objekt (se3)
+    se3 <- se2[subjectHits(hits)]
+    
+    
+        #en till for loop
+        res_gene <- rep(NA, nrow(se3))
+        
+        for(j in 1:nrow(se3)){
+    
+        #Ta ut en gen från den matchade datan
+        gene <- assays(se3[j,])[["counts"]]
+        gene <- as.numeric(gene)
+        
+        
+        #analysera
+        res2 <- lm(gene~res)
+        res2
+        
+        res_gene[j] <- summary(res2)$coefficients[2,4]
+      }
+    
+    lst[[i]] <- res_gene 
+    
+  }
+
+
+
