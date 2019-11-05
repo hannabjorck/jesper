@@ -77,10 +77,12 @@ ranSNP <- geno(vcf)[["GT"]][1,]
 
 #nu är det så att du måste matcha individ i vcf med individ i se, du kan smidigast göra det såhär: GÖR FUNKTION AV DETTA ""match_vcf_object_to_another_vcf_object"
 #först GT
-id_vcf <- colnames(vcf)
 
 #fixa till dubbelnamnen i vcf ID
+id_vcf <- colnames(vcf)
 id_vcf2 <- sub(".*_","", id_vcf)
+#byt ut de gamla id mot dessa nya i id_vcf2
+colnames(vcf) <- id_vcf2
 
 #finns alla x i y, och vice versa
 id_se <- colnames(se)
@@ -91,7 +93,6 @@ se2 <- se[,tf2]
 
 #matcha på så sätt att individerna är i samma ordning
 vcf2 <- vcf[,tf]
-colnames(vcf2) <- sub(".*_","",colnames(vcf2))
 m <- match(colnames(se2), colnames(vcf2))
 
 
