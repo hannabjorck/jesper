@@ -81,7 +81,7 @@ infscore <- read.table("../../data/2019-10-25-INF score.txt", header=TRUE, strin
 
 #Gör om data/ID så att det matchar utseendemässigt
 id_infscore <- as.character(infscore$ID)
-id_infscore2 <- paste("A", inf_score[ ,"ID"], sep="")
+id_infscore2 <- paste("A", infscore[ ,"ID"], sep="")
 
 #finns alla x i y, och vice versa
 #tf2 <- id_se %in% id_infscore2 & id_se %in% id_vcf2
@@ -92,21 +92,21 @@ tf <- id_infscore2 %in% id_se
 tf2 <- id_se %in% id_infscore2
 
 #plocka ut ALL ID-data som överlappar.
-infscore2[ ,"ID"] <- id_infscore2
+infscore[ ,"ID"] <- id_infscore2
 se2 <- se[,tf2]
 
 #matcha så att ID ligger i samma ordning
-ID1 <- infscore2$ID
-m <- match(colnames(se2), infscore2$ID)
+ID1 <- infscore$ID
+m <- match(colnames(se2), infscore$ID)
 
-tf <- infscore2[m,]$ID==id_se
+tf <- infscore[m,]$ID==id_se
 if(!all(tf)) stop("something is wrong")
-infscore2_m <-infscore2[m,]
+infscore_m <-infscore[m,]
 
 #ret <- cbind(infscore2_m,id_se)
 
 #lägg in infscore under INF
-colData(se2)[["INF"]] <- infscore2_m[,2]
+colData(se2)[["INF"]] <- infscore_m[,2]
 
 ####
 # Här matcha vcf-informationen
@@ -145,16 +145,36 @@ snp1X[snp1=="0|0"] <- 1
 snp1X[snp1=="1|0" | snp1=="0|1" ] <- 2
 snp1X[snp1=="1|1"] <- 3
 
-#lm gilla rinte characters, gör därför värdena till numeric innan du gör lm
+#lm gillar inte characters, gör därför värdena till numeric innan du gör lm
 snp1X <- as.numeric(snp1X)
 
 #Ta ut en gen från den matchade datan
 gene1 <- assays(se3)[["counts"]][1,]
 #Ta ut INF från den matchade datan, vi ska använda den för att göra färgkaos
 inf <- colData(se3)[["INF"]] 
+colData(se3)$INF <- sub(",",".",colData(se3)$INF)
+inf<- as.numeric(colData(se3)$INF)
+as.numeric(colData(se3)$INF)
+
+#gör färgkaoset. Först, ladda paketet och "set colours using RColorBrewer"
+library(RColorBrewer)
+cols = brewer.pal(4, "Blues")
+# Define colour pallete
+pal = colorRampPalette(c("white", "red"))
+
+# Rank variable for colour assignment
+order = findInterval(inf, sort(inf))
+order = findInterval(as.numeric(colData(se3)$INF), sort(as.numeric(colData(se3)$INF)))
+pal(length(order))[order]
 
 #plotta. SNP måste göras om till factor, för att ta bort snuffarna. EDIT: snp1X måste göras om till as.integer för att få scatter plot. 
-plot(as.integer(snp1X), gene1, main="SNP1", xlab= "gt", ylab="expression", pch=19)
+library(gplots)
+better <- space(as.integer(snp1X), gene1, s=1/30, na.rm=TRUE, direction="x")
+x <- better$x
+y <- better$y
+
+#plot(as.integer(snp1X), gene1, main="SNP1", xlab= "gt", ylab="expression", pch=19, col=pal(length(order))[order] )
+plot(x, y, main="SNP1", xlab= "gt", ylab="expression", pch=19, col=pal(length(order))[order] )
 
 
 
@@ -167,7 +187,7 @@ res1 <- lm(gene1~snp1X)
 hits <- findOverlaps(granges(vcf2m[1,])+200000, se2)
 
 # --> Hits object with 2 hits and 0 metadata columns, betyder att i se2 så matchade element 14255 och 14256 (i detta fall två gener som "träffar" giantSNP)
-#plocka ut dessa två hits och spara dem i ett nytt objekt (se3)
+#plocka ut dessa två hits och spara dem i ett nytt objekt (se4)
 se4 <- se3[subjectHits(hits)]
 #--------------------------------------------------------------------------------------
 
@@ -209,7 +229,14 @@ lst <- list()
         inf <- colData(se4)[["INF"]]
        
         
-        #plot(as.integer(snp_each), gene, main="SNP1", xlab= "gt", ylab="expression", pch=19)
+        #plotta
+        #library(gplots)
+        #better <- space(x, y, s=1/50, na.rm=TRUE, direction="x")
+        #x <- better$x
+        #y <- better$y
+        
+        #plot(as.integer(snp1X), gene1, main="SNP1", xlab= "gt", ylab="expression", pch=19, col=pal(length(order))[order] )
+       
         
         #analysera
         res2 <- lm(gene~res)
