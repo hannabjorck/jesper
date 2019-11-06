@@ -75,8 +75,42 @@ se <-SummarizedExperiment(assays=list(counts=as.matrix(heartexp_clean)), rowRang
 #Ta ut en random SNP och förvandlavärdena till 1,2,3
 ranSNP <- geno(vcf)[["GT"]][1,]
 
-#nu är det så att du måste matcha individ i vcf med individ i se, du kan smidigast göra det såhär: GÖR FUNKTION AV DETTA ""match_vcf_object_to_another_vcf_object"
-#först GT
+
+#FÄRGLÄGG prickarna enligt deras INF-score. Börja med att importera data
+infscore <- read.table("../../data/2019-10-25-INF score.txt", header=TRUE, stringsAsFactors=FALSE)
+
+#Gör om data/ID så att det matchar utseendemässigt
+id_infscore <- as.character(infscore$ID)
+id_infscore2 <- paste("A", inf_score[ ,"ID"], sep="")
+
+#finns alla x i y, och vice versa
+#tf2 <- id_se %in% id_infscore2 & id_se %in% id_vcf2
+
+id_se <- colnames(se)
+
+tf <- id_infscore2 %in% id_se
+tf2 <- id_se %in% id_infscore2
+
+#plocka ut ALL ID-data som överlappar.
+infscore2[ ,"ID"] <- id_infscore2
+se2 <- se[,tf2]
+
+#matcha så att ID ligger i samma ordning
+ID1 <- infscore2$ID
+m <- match(colnames(se2), infscore2$ID)
+
+tf <- infscore2[m,]$ID==id_se
+if(!all(tf)) stop("something is wrong")
+infscore2_m <-infscore2[m,]
+
+#ret <- cbind(infscore2_m,id_se)
+
+#lägg in infscore under INF
+colData(se2)[["INF"]] <- infscore2_m[,2]
+
+####
+# Här matcha vcf-informationen
+####
 
 #fixa till dubbelnamnen i vcf ID
 id_vcf <- colnames(vcf)
@@ -85,17 +119,17 @@ id_vcf2 <- sub(".*_","", id_vcf)
 colnames(vcf) <- id_vcf2
 
 #finns alla x i y, och vice versa
-id_se <- colnames(se)
-tf <- id_vcf2 %in% id_se
-tf2 <- id_se %in% id_vcf2
+id_se2 <- colnames(se2)
+tf <- id_vcf2 %in% id_se2
+tf2 <- id_se2 %in% id_vcf2
 
-se2 <- se[,tf2]
+se3 <- se2[,tf2]
 
 #matcha på så sätt att individerna är i samma ordning
 vcf2 <- vcf[,tf]
-m <- match(colnames(se2), colnames(vcf2))
+m <- match(colnames(se3), colnames(vcf2))
 
-tf <- colnames(vcf2)[m]==colnames(se2)
+tf <- colnames(vcf2)[m]==colnames(se3)
 if(!all(tf)) stop("something is wrong") 
 vcf2m <- vcf2[,m]
 
@@ -115,44 +149,16 @@ snp1X[snp1=="1|1"] <- 3
 snp1X <- as.numeric(snp1X)
 
 #Ta ut en gen från den matchade datan
-gene1 <- assays(se2)[["counts"]][1,]
+gene1 <- assays(se3)[["counts"]][1,]
+#Ta ut INF från den matchade datan, vi ska använda den för att göra färgkaos
+inf <- colData(se3)[["INF"]] 
 
 #plotta. SNP måste göras om till factor, för att ta bort snuffarna. EDIT: snp1X måste göras om till as.integer för att få scatter plot. 
 plot(as.integer(snp1X), gene1, main="SNP1", xlab= "gt", ylab="expression", pch=19)
 
 
-#FÄRGLÄGG prickarna enligt deras INF-score. Börja med att importera data
-infscore <- read.table("../../data/2019-10-25-INF score.txt", header=TRUE, stringsAsFactors=FALSE)
 
-#Gör om data/ID så att det matchar utseendemässigt
-id_infscore <- as.character(infscore$ID)
-id_infscore2 <- paste("A", inf_score[ ,"ID"], sep="")
-
-#finns alla x i y, och vice versa
-tf2 <- id_se %in% id_infscore2 & id_se %in% id_vcf2
-
-tf <- id_infscore2 %in% id_se
-tf2 <- id_se %in% id_infscore2
-
-#plocka ut ALL ID-data som överlappar.
-infscore2[ ,"ID"] <- id_infscore2
-se2 <- se[,tf2]
-
-#matcha så att ID ligger i samma ordning
-ID1 <- infscore2$ID
-m <- match(colnames(se2), infscore2$ID)
-
-tf <- infscore2[m,]$ID==id_se
-if(!all(tf)) stop("something is wrong")
-infscore2_m <-infscore2[m,]
-
-#returnera den ihopslagna matrisen
-ret <- cbind(infscore2_m,id_se)
-
-#lägg in infscore under INF
-colData(se2)[["INF"]] <- infscore2_m[,2]
-
---------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------
 #analysera
 res1 <- lm(gene1~snp1X)
 
@@ -162,8 +168,8 @@ hits <- findOverlaps(granges(vcf2m[1,])+200000, se2)
 
 # --> Hits object with 2 hits and 0 metadata columns, betyder att i se2 så matchade element 14255 och 14256 (i detta fall två gener som "träffar" giantSNP)
 #plocka ut dessa två hits och spara dem i ett nytt objekt (se3)
-se3 <- se2[subjectHits(hits)]
---------------------------------------------------------------------------------------
+se4 <- se3[subjectHits(hits)]
+#--------------------------------------------------------------------------------------
 
 #for loop
 #TOM VEKTOR
@@ -187,20 +193,20 @@ lst <- list()
     hits <- findOverlaps(granges(vcf2m[i,])+200000, se2)
     
     # plocka ut hits och spara dem i ett nytt objekt (se3)
-    se3 <- se2[subjectHits(hits)]
+    se4 <- se3[subjectHits(hits)]
     
     
         #en till for loop
-        res_gene <- rep(NA, nrow(se3))
+        res_gene <- rep(NA, nrow(se4))
         
-        for(j in 1:nrow(se3)){
+        for(j in 1:nrow(se4)){
     
         #Ta ut en gen från den matchade datan
-        gene <- assays(se3[j,])[["counts"]]
+        gene <- assays(se4[j,])[["counts"]]
         gene <- as.numeric(gene)
         
         #Ta ut en INF från den matchade datan
-        inf <- colData(se3[j,])[["INF"]]
+        inf <- colData(se4)[["INF"]]
        
         
         #plot(as.integer(snp_each), gene, main="SNP1", xlab= "gt", ylab="expression", pch=19)
