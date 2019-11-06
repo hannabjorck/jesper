@@ -195,6 +195,7 @@ se4 <- se3[subjectHits(hits)]
 #TOM VEKTOR
 lst <- list()
 
+
   #Ta ut alla GT från den matchade datan
   for (i in 1:nrow(vcf2m)){
 
@@ -210,7 +211,7 @@ lst <- list()
     # res <- as.integer(snp_each)
     
     #För att kolla alla gener kring en snp. 
-    hits <- findOverlaps(granges(vcf2m[i,])+200000, se2)
+    hits <- findOverlaps(granges(vcf2m[i,])+200000, se3)
     
     # plocka ut hits och spara dem i ett nytt objekt (se3)
     se4 <- se3[subjectHits(hits)]
@@ -219,6 +220,11 @@ lst <- list()
         #en till for loop
         res_gene <- rep(NA, nrow(se4))
         
+       #pdf("../../out/eQTL_test.pdf")
+        
+        filename <- paste("../../out/eQTL_test2_", i, ".pdf", sep="" )
+        pdf(filename)
+        
         for(j in 1:nrow(se4)){
     
         #Ta ut en gen från den matchade datan
@@ -226,17 +232,31 @@ lst <- list()
         gene <- as.numeric(gene)
         
         #Ta ut en INF från den matchade datan
+        colData(se4)$INF <- sub(",",".",colData(se4)$INF)
         inf <- colData(se4)[["INF"]]
-       
+        inf<- as.numeric(colData(se4)$INF)
         
-        #plotta
-        #library(gplots)
-        #better <- space(x, y, s=1/50, na.rm=TRUE, direction="x")
-        #x <- better$x
-        #y <- better$y
-        
-        #plot(as.integer(snp1X), gene1, main="SNP1", xlab= "gt", ylab="expression", pch=19, col=pal(length(order))[order] )
        
+        #gör färgkaoset. Först, ladda paketet och "set colours using RColorBrewer"
+        library(RColorBrewer)
+        cols = brewer.pal(4, "Blues")
+        # Define colour pallete
+        pal = colorRampPalette(c("white", "red"))
+        
+        #Rank variable for colour assignment
+        #order = findInterval(inf, sort(inf))
+        order = findInterval(as.numeric(colData(se4)$INF), sort(as.numeric(colData(se4)$INF)))
+        
+        
+        #plotta. SNP måste göras om till factor, för att ta bort snuffarna. EDIT: snp1X måste göras om till as.integer för att få scatter plot. 
+        library(gplots)
+        better <- space(as.integer(res), gene, s=1/30, na.rm=TRUE, direction="x")
+        x <- better$x
+        y <- better$y
+        
+        plot(x, y, main="SNP", xlab= "Genotype", ylab="Expression", pch=19, col=pal(length(order))[order] )
+        
+        
         
         #analysera
         res2 <- lm(gene~res)
@@ -245,9 +265,12 @@ lst <- list()
         res_gene[j] <- summary(res2)$coefficients[2,4]
       }
     
+        
+        dev.off()
+        
     lst[[i]] <- res_gene 
     
   }
 
-
+#dev.off()
 
