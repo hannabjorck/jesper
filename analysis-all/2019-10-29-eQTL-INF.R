@@ -26,19 +26,36 @@ gr <- GRanges(seqnames=df$CHR, IRanges(start=df$BP,end=df$BP), strand="*")
 #SNPs åker in som namn    
 names(gr) <- df$SNP
 
-gr2 <- gr[seqnames(gr)=="22"]
-  
+#gr2 <- gr[seqnames(gr)=="22"]
 
 #Ladda paketet VariantAnnotation
 library("VariantAnnotation")
-  
-fl <- "../../data/vcfs/ASMADA_ASAP-MASAP_1KG_chr22.dose_maf-0.001_rsq-0.3-overlapping-variants.vcf.gz"
-#param <- ScanVcfParam(which=gr2)
-#vcf <- readVcf(fl, "hg19", param=gr2)
+#------------------------------------------------------------------------------------------
+
+#En chr för att testa
+#fl <- "../../data/vcfs/ASMADA_ASAP-MASAP_1KG_chr22.dose_maf-0.001_rsq-0.3-overlapping-variants.vcf.gz"
+
+#LOOPA sen iställt in alla chr samtidigt
+
+
+  lstVcf <- list()
+      for (i in 1:22){
+        cat("iteration number", i, "\n")
+        gr2 <- gr[seqnames(gr)==i] 
+        fl <- paste("../../data/vcfs/ASMADA_ASAP-MASAP_1KG_chr", i, ".dose_maf-0.001_rsq-0.3-overlapping-variants.vcf.gz", sep="")
+
+#-------------------------------------------------------------------------------------------      
+
+      #param <- ScanVcfParam(which=gr2)
+      #vcf <- readVcf(fl, "hg19", param=gr2)
     
-vcf <- readVcf(fl, "hg19", param=ScanVcfParam(which=gr2))
-vcf
-    
+      vcf <- readVcf(fl, "hg19", param=ScanVcfParam(which=gr2))
+      lstVcf[[i]] <- vcf   
+
+      }
+
+vcfAll <- do.call("rbind", lstVcf)
+vcf <- vcfAll
 
 #Läs in genexpressionsdata
 heartexp <- read.table("../../data/2018-06-25-bed-expression-ASAP_H.bed", header=TRUE, comment.char = "&", stringsAsFactors=FALSE)
@@ -108,9 +125,9 @@ infscore_m <-infscore[m,]
 #lägg in infscore under INF
 colData(se2)[["INF"]] <- infscore_m[,2]
 
-####
+###########################
 # Här matcha vcf-informationen
-####
+###########################
 
 #fixa till dubbelnamnen i vcf ID
 id_vcf <- colnames(vcf)
@@ -241,7 +258,7 @@ lst <- list()
         library(RColorBrewer)
         cols = brewer.pal(4, "Blues")
         # Define colour pallete
-        pal = colorRampPalette(c("white", "red"))
+        pal = colorRampPalette(c("beige", "red"))
         
         #Rank variable for colour assignment
         #order = findInterval(inf, sort(inf))
@@ -254,15 +271,30 @@ lst <- list()
         x <- better$x
         y <- better$y
         
-        plot(x, y, main="SNP", xlab= "Genotype", ylab="Expression", pch=19, col=pal(length(order))[order] )
-        
-        
-        
+       
         #analysera
         res2 <- lm(gene~res)
         res2
         
         res_gene[j] <- summary(res2)$coefficients[2,4]
+        
+        #plot(x, y, main="SNP", xlab= "Genotype", ylab="Expression", pch=19, col=pal(length(order))[order] )
+        
+        
+        
+        plot(x, y, main=paste(mcols(vcf)[["paramRangeID"]], names(vcf), sep=", ")[i], xlab= "Genotype", ylab="Expression", pch=19, col=pal(length(order))[order] )
+        abline(res2)
+        #mtext(summary(res2)$coefficients[2,4], summary(paste(res2)$coefficients[2,4], summary(res2)$adj.r.squared, side=3, padj=-1)
+       
+        #textAttSkrivaTillPlot <- paste(summary(res2)$coefficients[2,4], summary(res2)$adj.r.squared, sep=", ")
+        textAttSkrivaTillPlot <- paste("Pvalue:", round(summary(res2)$coefficients[2,4], 3), "R2:", round(summary(res2)$adj.r.squared, 3))
+        mtext(textAttSkrivaTillPlot, side=3)
+        
+        
+        #mtext(summary(res2)$adj.r.squared, side=4, padj=1)
+        #mtext(summary(res2)$coefficients[2,4],side=3, padj=0)
+       
+
       }
     
         
